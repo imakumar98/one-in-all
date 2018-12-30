@@ -4,6 +4,8 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
+const cors = require('cors');
+
 //Load database URL
 const Keys = require('./config/keys');
 
@@ -19,6 +21,7 @@ const port= process.env.PORT || 5000;
 //Message model
 const Message = require('./models/Chat/Message');
 
+app.use(cors());
 app.use(bodyParser.urlencoded({extended : true}));
 app.use(bodyParser.json());
 
