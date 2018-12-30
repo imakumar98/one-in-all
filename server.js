@@ -1,16 +1,23 @@
-const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-var app = express();
+var app = require('express')();
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
 
+//Load database URL
 const Keys = require('./config/keys');
 
-//Load Model
-const Todo = require('./models/Todo');
+//Load APIs
+const todos = require('./routes/api/todos');
+const notes = require('./routes/api/notes');
+const messages = require('./routes/api/messages');
 
 //port
-const port= process.env.PORT || 3000
+const port= process.env.PORT || 5000;
 
+
+//Message model
+const Message = require('./models/Chat/Message');
 
 app.use(bodyParser.urlencoded({extended : true}));
 app.use(bodyParser.json());
@@ -22,36 +29,38 @@ mongoose.connect(Keys.mongoURL,{ useNewUrlParser: true }).then(()=>{
     console.log('Database connection failed');
 });
 
-app.post('/todos',(req,res)=>{
-    var todo = new Todo({
-        text : req.body.text
-    });
 
-    todo.save()
-    .then(todo=>{
-        res.json(todo);
-    })
-    .catch(err=>{
-        res.json(err);
-    })
 
-})
-
-app.get('/todos',(req,res)=>{
-    
-
-    Todo.find()
-    .then(todos=>{
-        res.json(todos);
-    })
-    .catch(err=>{
-        res.json(err);
+//Sockets.IO
+io.on('connection', function(socket) {
+    console.log('A user connected');
+    socket.on('message',(newMessage)=>{
+        var message = new Message(newMessage);
+        message.save()
+        .then((message)=>{
+            io.sockets.emit('broadcast',newMessage);
+        })
+        .catch(err=>{
+            console.log(err);
+        })
+        
     })
 
-})
+   
+   socket.on('disconnect', function () {
+      console.log('A user disconnected');
+   });
+});
 
 
 
-app.listen(port,()=>{
-    console.log("Server started at port 3000");
-})
+//SET Routes
+app.use('/api',todos);
+app.use('/api',notes);
+app.use('/api',messages);
+
+
+
+http.listen(port, function() {
+    console.log('listening on *:5000');
+ });

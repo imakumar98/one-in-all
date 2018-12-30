@@ -11,6 +11,10 @@ var TodoSchema = new Schema({
         type : Date,
         default : Date.now()
     }
+    // dateOnly : {
+    //     type : String,
+    //     default : new Date().getUTCDate() + '-' + (new Date().getUTCMonth() + 1) + '-' + new Date().getUTCFullYear()
+    // }
 });
 
 module.exports = {Todo} = mongoose.model('todos',TodoSchema);
